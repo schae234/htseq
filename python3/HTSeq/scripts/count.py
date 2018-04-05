@@ -32,7 +32,8 @@ def count_reads_in_features(sam_filenames, gff_filename,
                             supplementary_alignment_mode,
                             feature_type, id_attribute,
                             additional_attributes,
-                            quiet, minaqual, samouts):
+                            quiet, minaqual, samouts,
+                            skip_missing):
 
     def write_to_samout(r, assignment, samoutfile):
         if samoutfile is None:
@@ -73,7 +74,12 @@ def count_reads_in_features(sam_filenames, gff_filename,
                 try:
                     feature_id = f.attr[id_attribute]
                 except KeyError:
-                    raise ValueError("Feature %s does not contain a '%s' attribute" %
+                    if skip_missing: 
+                        sys.stderr.write("Skipping %s as it does not contain '%s' attribute\n" %
+                                (f.name, id_attribute))
+                        continue
+                    else:
+                        raise ValueError("Feature %s does not contain a '%s' attribute" %
                                      (f.name, id_attribute))
                 if stranded != "no" and f.iv.strand == ".":
                     raise ValueError("Feature %s at %s does not have strand information but you are "
@@ -432,6 +438,12 @@ def main():
             "-q", "--quiet", action="store_true", dest="quiet",
             help="suppress progress report")  # and warnings" )
 
+    pa.add_argument(
+            '--skip-missing',action="store_true", dest="skip_missing",
+            default=False,
+            help="Skip features missing the specified feature attribute (See -i)."
+            )
+
     args = pa.parse_args()
 
     warnings.showwarning = my_showwarning
@@ -452,7 +464,8 @@ def main():
                 args.additional_attr,
                 args.quiet,
                 args.minaqual,
-                args.samouts)
+                args.samouts,
+                args.skip_missing)
     except:
         sys.stderr.write("  %s\n" % str(sys.exc_info()[1]))
         sys.stderr.write("  [Exception type: %s, raised in %s:%d]\n" %
