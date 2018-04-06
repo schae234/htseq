@@ -75,8 +75,9 @@ def count_reads_in_features(sam_filenames, gff_filename,
                     feature_id = f.attr[id_attribute]
                 except KeyError:
                     if skip_missing: 
-                        sys.stderr.write("Skipping %s as it does not contain '%s' attribute\n" %
-                                (f.name, id_attribute))
+                        if not quiet:
+                            sys.stderr.write("Skipping %s as it does not contain '%s' attribute\n" %
+                                    (f.name, id_attribute))
                         continue
                     else:
                         raise ValueError("Feature %s does not contain a '%s' attribute" %
